@@ -35,16 +35,19 @@ async def create_me(
 
 @cau_tra_loi_router.put("/me/save")
 async def save_me(
-    payload: dict,
+    payload: CauTraLoiKhaoSatSubmit,
     current_user: User = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_mongo_db)
 ):
-    coll = db["cau_tra_loi_khao_sat"]
-    payload["userId"] = str(current_user.id)
-    payload["username"] = current_user.username
-    res = await coll.insert_one(payload)
-    payload["_id"] = str(res.inserted_id)
-    return payload
+    from app.modules.khao_sat.service import KhaoSatService
+    service = KhaoSatService(db)
+    user_dict = {
+        "ssoId": str(getattr(current_user, "sso_id", None) or getattr(current_user, "sub", None) or current_user.id),
+        "username": current_user.username,
+        "fullname": getattr(current_user, "full_name", None) or current_user.username,
+    }
+    return await service.user_create_cau_tra_loi_khao_sat(user_dict, payload, mode="save")
+
 
 
 @cau_tra_loi_router.get("/me/khao-sat/{idKhaoSat}/dot/{idDot}")
@@ -54,11 +57,11 @@ async def get_cau_tra_loi_id_bieu_mau(
     current_user: User = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_mongo_db)
 ):
-    coll = db["cau_tra_loi_khao_sat"]
+    user_sso = str(getattr(current_user, "sso_id", None) or current_user.id)
     doc = await coll.find_one({
-        "userId": str(current_user.id),
-        "khaoSatId": idKhaoSat,
-        "dotId": idDot
+        "$or": [{"userSsoId": user_sso}, {"userId": str(current_user.id)}],
+        "idKhaoSat": idKhaoSat,
+        "idDot": idDot
     })
     if doc:
         doc["_id"] = str(doc["_id"])

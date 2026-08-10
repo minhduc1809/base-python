@@ -21,7 +21,7 @@ from app.core.logging import logger, setup_logging
 from app.modules.audit_log.router import router as audit_log_router
 from app.modules.auth.router import router as auth_router
 from app.modules.common_provider.router import router as common_provider_router
-from app.modules.core.router import router as core_router
+from app.modules.cron_manager.router import router as cron_manager_router
 from app.modules.danh_muc.router import router as danh_muc_router
 from app.modules.data_partition.router import router as data_partition_router
 from app.modules.data_partition.data_partition_user_router import router as data_partition_user_router
@@ -128,6 +128,7 @@ app.include_router(increment_router)
 app.include_router(file_router)
 app.include_router(minio_router)
 app.include_router(audit_log_router)
+app.include_router(cron_manager_router)
 app.include_router(import_session_router)
 app.include_router(notification_router)
 app.include_router(one_signal_router)

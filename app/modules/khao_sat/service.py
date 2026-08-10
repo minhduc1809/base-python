@@ -51,7 +51,7 @@ class KhaoSatService:
         return results
 
     async def user_create_cau_tra_loi_khao_sat(
-        self, user: Dict[str, Any], dto: CauTraLoiKhaoSatSubmit
+        self, user: Dict[str, Any], dto: CauTraLoiKhaoSatSubmit, mode: str = "create"
     ) -> Dict[str, Any]:
         """
         Port 1-1 từ userCreate trong NestJS (cau-tra-loi-khao-sat.service.ts:L389-537).
@@ -78,7 +78,8 @@ class KhaoSatService:
             "userCode": user_code,
             "hoTen": ho_ten,
             "vaiTro": dto.nguoiTraLoi,
-            "answered": True,
+            "answered": (mode == "create"),
+            "saved": (mode == "save"),
             "dataPartitionCode": get_current_partition_code(),
         })
 
