@@ -24,7 +24,7 @@ class UserService:
         """Port 1-1 từ onApplicationBootstrap (user.service.ts:L54-78).
         Tự động khởi tạo tài khoản admin mặc định khi ứng dụng khởi chạy nếu chưa tạo.
         """
-        if not self.mongo_db:
+        if self.mongo_db is None:
             return
 
         settings_coll = self.mongo_db["settings"]

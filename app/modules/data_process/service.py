@@ -42,7 +42,7 @@ class DataProcessService:
     # ─── replaceDomainUrlMongo (data-process.service.ts:L45-102) ────
     async def replace_domain_url_mongo(self, old_domain: str, new_domain: str, skip_tables: Optional[List[str]] = None) -> dict:
         """Port 1-1 từ replaceDomainUrlMongo(dto)."""
-        if not self.mongo_db:
+        if self.mongo_db is None:
             return {"error": "MongoDB connection not available"}
 
         skip_db_set: Set[str] = set(skip_tables or [])
@@ -101,7 +101,7 @@ class DataProcessService:
     # ─── replaceDomainUrlSql (data-process.service.ts:L104-234) ─────
     async def replace_domain_url_sql(self, old_domain: str, new_domain: str, skip_tables: Optional[List[str]] = None) -> dict:
         """Port 1-1 từ replaceDomainUrlSql(dto)."""
-        if not self.sql_db:
+        if self.sql_db is None:
             return {"error": "SQL connection not available"}
 
         skip_db_set: Set[str] = set(skip_tables or [])

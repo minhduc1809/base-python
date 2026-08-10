@@ -21,6 +21,7 @@ from app.core.logging import logger, setup_logging
 from app.modules.audit_log.router import router as audit_log_router
 from app.modules.auth.router import router as auth_router
 from app.modules.common_provider.router import router as common_provider_router
+from app.modules.core.router import router as core_router
 from app.modules.cron_manager.router import router as cron_manager_router
 from app.modules.danh_muc.router import router as danh_muc_router
 from app.modules.data_partition.router import router as data_partition_router
@@ -74,6 +75,19 @@ async def lifespan(app: FastAPI):
     setup_logging()
     logger.info("Starting Python FastAPI Backend...", env=settings.SERVER_ENV)
     await init_databases()
+
+    # OnApplicationBootstrap init
+    try:
+        from app.core.database import AsyncSessionLocal, get_mongo_db
+        from app.modules.user.service import UserService
+        async with AsyncSessionLocal() as db:
+            mongo_db = get_mongo_db()
+            user_svc = UserService(db, mongo_db)
+            await user_svc.on_application_bootstrap()
+            await db.commit()
+    except Exception as e:
+        logger.error("Failed to run on_application_bootstrap", error=str(e))
+
     yield
     # Shutdown
     logger.info("Shutting down Python FastAPI Backend...")
