@@ -1,6 +1,5 @@
 """
-Data Process Service — Port 1-1 từ data-process.service.ts (base-backend).
-Bao gồm replaceDomainUrlMongo và replaceDomainUrlSql.
+Data Process Service - Xử lý chuyển đổi dữ liệu và thay thế domain trong MongoDB / PostgreSQL.
 """
 from typing import Any, Dict, List, Optional, Set
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -10,7 +9,7 @@ from app.core.logging import logger
 
 
 class DataProcessService:
-    """Port 1-1 từ DataProcessService (data-process.service.ts:L10-235)."""
+    """Service xử lý dữ liệu hàng loạt."""
 
     def __init__(self, mongo_db: Optional[AsyncIOMotorDatabase] = None, sql_db: Optional[AsyncSession] = None):
         self.mongo_db = mongo_db

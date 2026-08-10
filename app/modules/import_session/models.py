@@ -5,7 +5,7 @@ from app.core.database import get_mongo_db
 
 
 class ImportSessionModel:
-    """Port 1-1 từ ImportSession entity (entities/import-session.entity.ts)."""
+    """Model quản lý các phiên nhập dữ liệu (Import Sessions)."""
 
     def __init__(self, db: Optional[AsyncIOMotorDatabase] = None):
         self.db = db or get_mongo_db()

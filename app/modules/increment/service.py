@@ -5,7 +5,7 @@ from app.core.database import get_redis, get_mongo_db
 
 
 class IncrementService:
-    """Port 1-1 từ IncrementService trong NestJS (increment.service.ts:L10-45)."""
+    """Service quản lý chuỗi số tự tăng (Atomic Increment Counters)."""
 
     def __init__(self, redis: Optional[Redis] = None, db: Optional[AsyncIOMotorDatabase] = None):
         self.redis = redis
@@ -17,11 +17,10 @@ class IncrementService:
         return self.redis
 
     async def get_increase_count(self, key_name: str) -> int:
-        """Port 1-1 từ getIncreaseCount (increment.service.ts:L14-17)."""
         return await self.get_next_increment(key_name)
 
     async def get_next_increment(self, key_name: str) -> int:
-        """Port từ getNextIncrement (increment.service.ts:L15-25): Lấy số tự tăng tiếp theo (Atomic)."""
+        """Lấy số tự tăng tiếp theo (Atomic)."""
         redis = await self._get_redis()
         try:
             return await redis.incr(f"seq:{key_name}")
@@ -37,7 +36,6 @@ class IncrementService:
             return res.get("seq", 1)
 
     async def reset_increment(self, key_name: str, value: int = 0) -> bool:
-        """Port từ resetIncrement (increment.service.ts:L28-35)."""
         redis = await self._get_redis()
         try:
             await redis.set(f"seq:{key_name}", value)
@@ -49,7 +47,6 @@ class IncrementService:
         return True
 
     async def get_increment_value(self, key_name: str) -> int:
-        """Port từ getIncrementValue (increment.service.ts:L38-45)."""
         redis = await self._get_redis()
         try:
             val = await redis.get(f"seq:{key_name}")

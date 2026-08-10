@@ -25,7 +25,6 @@ class SettingService:
         return setting.value if setting else None
 
     async def set_setting_value(self, key: SettingKey, value: Any, description: Optional[str] = None) -> Setting:
-        """Port 1-1 từ setSettingValue (setting.service.ts:L27-51)."""
         key_str = key.value if isinstance(key, SettingKey) else str(key)
         # Validate key exists in SettingKey enum
         valid_keys = {e.value for e in SettingKey}

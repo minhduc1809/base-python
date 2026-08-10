@@ -1,5 +1,5 @@
 """
-File Router — port 1-1 từ file.controller.ts + file-public.controller.ts + file-internal.controller.ts.
+File Router - Quản lý File Upload, Download, Streaming và Multipart Upload.
 """
 from typing import List, Optional
 from fastapi import APIRouter, Depends, File, Form, Header, Request, UploadFile, status

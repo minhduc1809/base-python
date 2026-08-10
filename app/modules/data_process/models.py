@@ -5,7 +5,7 @@ from app.core.database import get_mongo_db
 
 
 class DataProcessModel:
-    """Port 1-1 từ DataProcess entity (entities/data-process.entity.ts)."""
+    """Model quản lý các tiến trình xử lý dữ liệu hàng loạt."""
 
     def __init__(self, db: Optional[AsyncIOMotorDatabase] = None):
         self.db = db or get_mongo_db()

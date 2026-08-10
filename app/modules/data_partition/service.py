@@ -1,5 +1,5 @@
 """
-Data Partition Service — Port 1-1 từ data-partition.service.ts và data-partition-user.service.ts.
+Data Partition Service - Quản lý phân vùng dữ liệu và phân quyền đa tầng.
 """
 from typing import Any, Dict, List, Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -8,7 +8,7 @@ from app.modules.data_partition.models import DataPartitionModel
 
 
 class DataPartitionService:
-    """Port 1-1 từ DataPartitionService (data-partition.service.ts)."""
+    """Service xử lý cây phân vùng dữ liệu."""
 
     def __init__(self, db: Optional[AsyncIOMotorDatabase] = None):
         self.model = DataPartitionModel(db)

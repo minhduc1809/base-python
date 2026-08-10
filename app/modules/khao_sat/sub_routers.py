@@ -130,7 +130,6 @@ async def dong_bo_cau_tra_loi_khao_sat(
 
 from app.common.base_framework.base_controller_factory import create_base_router, DPQueryScope
 
-# Base Class integration for sub-routers
 cau_tra_loi_base = create_base_router(collection_name="cau_tra_loi_khao_sat", prefix="/cau-tra-loi-khao-sat", tags=["cau-tra-loi-khao-sat"], scope=DPQueryScope.NODE)
 cau_tra_loi_router.include_router(cau_tra_loi_base)
 

@@ -1,6 +1,3 @@
-"""
-User Service — Port 1-1 từ user.service.ts (base-backend).
-"""
 from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,16 +11,14 @@ from app.modules.setting.constants import SettingKey
 
 
 class UserService:
-    """Port 1-1 từ UserService (user.service.ts)."""
+    """Service quản lý thông tin người dùng."""
 
     def __init__(self, db: AsyncSession, mongo_db: Optional[AsyncIOMotorDatabase] = None):
         self.db = db
         self.mongo_db = mongo_db
 
     async def on_application_bootstrap(self):
-        """Port 1-1 từ onApplicationBootstrap (user.service.ts:L54-78).
-        Tự động khởi tạo tài khoản admin mặc định khi ứng dụng khởi chạy nếu chưa tạo.
-        """
+        """Tự động khởi tạo tài khoản admin mặc định khi ứng dụng khởi chạy nếu chưa tạo."""
         if self.mongo_db is None:
             return
 
@@ -60,7 +55,6 @@ class UserService:
             )
 
     async def internal_get_by_id(self, user_id: int) -> Optional[User]:
-        """Port 1-1 từ internalGetById(id)."""
         stmt = select(User).where(User.id == user_id)
         res = await self.db.execute(stmt)
         return res.scalar_one_or_none()

@@ -44,7 +44,6 @@ async def list_form_submissions(
     return await service.list_submissions(ma_form, limit=limit)
 
 
-# Base Class Router Integration
 base_router = create_base_router(
     collection_name="form_dong",
     prefix="/form-dong",

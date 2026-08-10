@@ -4,7 +4,7 @@ from app.core.security import hash_password
 
 
 class UserImportService(BaseImportService):
-    """Port 1-1 từ UserImportService trong NestJS (user-import.service.ts:L1-35)."""
+    """Import service xử lý nhập dữ liệu danh sách người dùng từ Excel."""
 
     async def preprocess_import(
         self, rows: List[Dict[str, Any]], context: Optional[Dict[str, Any]] = None

@@ -1,6 +1,3 @@
-"""
-Topic Router — port 1-1 từ topic.controller.ts (base-backend).
-"""
 from typing import Optional
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
@@ -24,7 +21,6 @@ async def subscribe_topic(
     current_user: User = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_mongo_db),
 ):
-    """Port 1-1 từ TopicController.userSubscribeTopic (topic.controller.ts)."""
     service = TopicService(db)
     res = await service.user_subscribe_topic(user_id=str(current_user.id), topic_id_or_name=dto.topic)
     return {"message": "Đã đăng ký topic thành công", "data": res}

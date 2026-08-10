@@ -54,7 +54,7 @@ class KhaoSatService:
         self, user: Dict[str, Any], dto: CauTraLoiKhaoSatSubmit, mode: str = "create"
     ) -> Dict[str, Any]:
         """
-        Port 1-1 từ userCreate trong NestJS (cau-tra-loi-khao-sat.service.ts:L389-537).
+        userCreate - Tạo / Lưu câu trả lời khảo sát.
         Bao gồm:
         - Tính điểm diemPhongCTSV / trắc nghiệm
         - Chống trùng (checkExist)
@@ -83,7 +83,7 @@ class KhaoSatService:
             "dataPartitionCode": get_current_partition_code(),
         })
 
-        # 1. Tính điểm phòng CTSV nếu trangThaiNopCoVan == DA_GUI (L455-473)
+        # 1. Tính điểm phòng CTSV nếu trangThaiNopCoVan == DA_GUI
         if dto.trangThaiNopCoVan == TrangThaiPhieuDiem.DA_GUI:
             doc_dict["diemPhongCTSV"] = 0.0
             list_id = []
@@ -103,7 +103,7 @@ class KhaoSatService:
                     except (ValueError, TypeError):
                         pass
 
-        # 2. Check exist chống trùng (L490-495)
+        # 2. Check exist chống trùng
         check_exist_query = {
             "ssoIdSinhVien": dto.ssoIdSinhVien,
             "userSsoId": user_sso_id,
@@ -112,7 +112,7 @@ class KhaoSatService:
         }
         check_exist = await self.answers_collection.find_one(check_exist_query)
 
-        # 3. Helper cập nhật PhieuDiemRenLuyen (L496-520)
+        # 3. Helper cập nhật PhieuDiemRenLuyen
         async def update_trang_thai():
             if not dto.ssoIdSinhVien or not dto.idDotChamDiemRenLuyen:
                 return

@@ -25,7 +25,6 @@ async def submit_answers(
 
 from app.common.base_framework.base_controller_factory import create_base_router, DPQueryScope
 
-# Base Class Router Integration
 base_router = create_base_router(
     collection_name="khao_sat",
     prefix="/khao-sat",

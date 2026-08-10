@@ -4,7 +4,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.context import get_current_partition_code
 
 class DPQueryScope(str, enum.Enum):
-    """Scope lọc dữ liệu theo Phân vùng (dịch 1-1 từ NestJS DPQueryScope - constant.ts:L9)."""
+    """Scope lọc dữ liệu theo Phân vùng (NODE, SUBTREE, ROOT_PATH, GLOBAL)."""
     NODE = "NODE"
     SUBTREE = "SUBTREE"
     ROOT_PATH = "ROOT_PATH"
@@ -16,7 +16,6 @@ T = TypeVar("T")
 
 class BaseMongoRepository(Generic[T]):
     """
-    Port 1-1 từ MongoRepository trong NestJS (mongo.repository.ts:L46-180).
     Hỗ trợ tự động gắn Data Partition filter theo scope NODE/SUBTREE/ROOT_PATH/GLOBAL.
     """
 
@@ -26,9 +25,6 @@ class BaseMongoRepository(Generic[T]):
         self.scope = scope
 
     async def get_data_partition_condition(self, custom_scope: Optional[DPQueryScope] = None) -> Dict[str, Any]:
-        """
-        Dịch 1-1 từ getDataPartitionCondition (mongo.repository.ts:L99-156).
-        """
         scope = custom_scope or self.scope
         if scope == DPQueryScope.GLOBAL:
             return {}
@@ -54,7 +50,6 @@ class BaseMongoRepository(Generic[T]):
         return {}
 
     async def create(self, document: Dict[str, Any]) -> Dict[str, Any]:
-        """Dịch 1-1 từ create (mongo.repository.ts:L188)."""
         partition_filter = await self.get_data_partition_condition(DPQueryScope.NODE)
         document.update(partition_filter)
         res = await self.collection.insert_one(document)
@@ -62,7 +57,6 @@ class BaseMongoRepository(Generic[T]):
         return document
 
     async def get_by_id(self, item_id: str) -> Optional[Dict[str, Any]]:
-        """Dịch 1-1 từ getById (mongo.repository.ts:L220)."""
         from bson import ObjectId
         query = await self.get_data_partition_condition()
         try:
@@ -76,7 +70,6 @@ class BaseMongoRepository(Generic[T]):
         return doc
 
     async def get_page(self, page: int = 1, limit: int = 20, search: Optional[str] = None) -> Dict[str, Any]:
-        """Dịch 1-1 từ getPage (mongo.repository.ts:L280)."""
         query = await self.get_data_partition_condition()
         if search:
             query["$text"] = {"$search": search}
@@ -99,7 +92,6 @@ class BaseMongoRepository(Generic[T]):
         }
 
     async def update_by_id(self, item_id: str, update_doc: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Dịch 1-1 từ updateById (mongo.repository.ts:L340)."""
         from bson import ObjectId
         query = await self.get_data_partition_condition()
         try:
@@ -118,7 +110,6 @@ class BaseMongoRepository(Generic[T]):
         return res
 
     async def delete_by_id(self, item_id: str) -> bool:
-        """Dịch 1-1 từ deleteById (mongo.repository.ts:L410)."""
         from bson import ObjectId
         query = await self.get_data_partition_condition()
         try:
@@ -128,3 +119,71 @@ class BaseMongoRepository(Generic[T]):
 
         res = await self.collection.delete_one(query)
         return res.deleted_count > 0
+
+    async def get_many(self, limit: int = 100, conditions: Optional[Dict[str, Any]] = None, search: Optional[str] = None) -> List[Dict[str, Any]]:
+        query = await self.get_data_partition_condition()
+        if conditions:
+            query.update(conditions)
+        if search:
+            query["$text"] = {"$search": search}
+
+        cursor = self.collection.find(query).limit(limit)
+        items = []
+        async for doc in cursor:
+            doc["_id"] = str(doc["_id"])
+            items.append(doc)
+        return items
+
+    async def get_one(self, conditions: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+        query = await self.get_data_partition_condition()
+        if conditions:
+            query.update(conditions)
+
+        doc = await self.collection.find_one(query)
+        if doc:
+            doc["_id"] = str(doc["_id"])
+        return doc
+
+    async def upsert(self, document: Dict[str, Any]) -> Dict[str, Any]:
+        from bson import ObjectId
+        item_id = document.get("_id") or document.get("id")
+        query = await self.get_data_partition_condition()
+        if item_id:
+            try:
+                query["_id"] = ObjectId(item_id)
+            except Exception:
+                query["_id"] = item_id
+
+        document.pop("_id", None)
+        res = await self.collection.find_one_and_update(
+            query,
+            {"$set": document},
+            upsert=True,
+            return_document=True
+        )
+        if res:
+            res["_id"] = str(res["_id"])
+        return res
+
+    async def update_by_ids(self, ids: List[str], update_doc: Dict[str, Any]) -> int:
+        if not ids:
+            return 0
+        from bson import ObjectId
+        query = await self.get_data_partition_condition()
+        object_ids = [ObjectId(i) if ObjectId.is_valid(i) else i for i in ids]
+        query["_id"] = {"$in": object_ids}
+
+        update_doc.pop("_id", None)
+        res = await self.collection.update_many(query, {"$set": update_doc})
+        return res.modified_count
+
+    async def delete_by_ids(self, ids: List[str]) -> int:
+        if not ids:
+            return 0
+        from bson import ObjectId
+        query = await self.get_data_partition_condition()
+        object_ids = [ObjectId(i) if ObjectId.is_valid(i) else i for i in ids]
+        query["_id"] = {"$in": object_ids}
+
+        res = await self.collection.delete_many(query)
+        return res.deleted_count

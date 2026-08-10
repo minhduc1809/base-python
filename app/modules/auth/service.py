@@ -1,6 +1,5 @@
 """
-Auth Service — Port 1-1 từ auth.service.ts (base-backend).
-Logic giữ nguyên y hệt NestJS, tách methods đúng thứ tự.
+Auth Service - Đăng nhập, đăng xuất, làm mới token và quản lý phiên làm việc.
 """
 import time
 import uuid
@@ -26,7 +25,7 @@ from app.modules.auth.schemas import (
 
 
 class AuthService:
-    """Port 1-1 từ AuthService extends BaseService<Auth, AuthRepository> (auth.service.ts:L35-263)."""
+    """Service xử lý logic xác thực tài khoản và cấp JWT token."""
 
     def __init__(self, db: AsyncSession):
         self.db = db

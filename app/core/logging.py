@@ -13,6 +13,10 @@ def setup_logging() -> None:
         level=log_level,
     )
 
+    # Silence noisy PyMongo / Motor server heartbeat loggers
+    for logger_name in ("pymongo", "pymongo.topology", "pymongo.server", "pymongo.connection", "pymongo.command", "motor"):
+        logging.getLogger(logger_name).setLevel(logging.WARNING)
+
     processors = [
         structlog.contextvars.merge_contextvars,
         structlog.stdlib.add_logger_name,

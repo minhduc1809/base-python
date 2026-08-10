@@ -1,6 +1,5 @@
 """
-File Model — port 1-1 từ file entity + repository trong NestJS.
-Collection 'files' tương đương collection MongoDB trong NestJS.
+File Model - Thao tác lưu trữ dữ liệu tập tin trong MongoDB.
 """
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional

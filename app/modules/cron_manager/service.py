@@ -1,5 +1,5 @@
 """
-Cron Manager Service — Port 1-1 từ cron-manager.service.ts (src/cron-manager/cron-manager.service.ts).
+Cron Manager Service - Quản lý tiến trình lập lịch (Cron Jobs).
 """
 import os
 from typing import Any, Dict, List, Optional
@@ -13,7 +13,7 @@ from app.modules.cron_manager.models import CronManagerModel
 
 
 class CronManagerService:
-    """Port 1-1 từ CronManagerService (cron-manager.service.ts:L8-46)."""
+    """Service lập lịch và quản lý cron job."""
 
     def __init__(self, db: Optional[AsyncIOMotorDatabase] = None, redis: Optional[Redis] = None):
         self.model = CronManagerModel(db)

@@ -1,5 +1,5 @@
 """
-Data Partition Router — port 1-1 từ controllers/data-partition*.ts.
+Data Partition Router - Quản lý phân vùng dữ liệu đa tầng.
 """
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, status
@@ -96,7 +96,6 @@ async def create_partition(
     return await service.model.create_partition(ma=dto.ma, ten=dto.ten, parent_code=dto.parent_code)
 
 
-# Base Class Router Integration
 base_router = create_base_router(
     collection_name="data_partitions",
     prefix="/data-partition",

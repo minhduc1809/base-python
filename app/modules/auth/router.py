@@ -1,7 +1,5 @@
 """
-Auth Router — port 1-1 từ auth-public.controller.ts (base-backend).
-Chỉ có 3 public routes: login, logout, refresh.
-/me giữ lại vì cần thiết cho frontend.
+Auth Router - Public routes: login, logout, refresh, me.
 """
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession

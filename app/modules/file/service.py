@@ -1,11 +1,5 @@
 """
-File Service — Port 1-1 từ file.service.ts (base-backend).
-Logic giữ nguyên y hệt NestJS, bao gồm:
-- Database / S3 storage switching
-- File scope access control (PUBLIC, INTERNAL, PRIVATE)
-- Multipart upload thực sự
-- migrateDbToS3, compressFiles
-- getUrl, getFileBuffer, getFileInfo, deleteById, upsertById
+File Service - Quản lý File Upload, Download, Access Control, S3/MinIO Storage.
 """
 import asyncio
 import base64
@@ -27,7 +21,6 @@ from app.modules.file.models import FileModel
 from app.modules.setting.constants import SettingKey
 
 
-# ─── Constants port từ file/common/constant.ts ──────────────────
 class FileStorageType:
     DATABASE = "database"
     S3 = "s3"
@@ -45,7 +38,7 @@ class FileUploadTarget:
 
 
 class FileService:
-    """Port 1-1 từ FileService (file.service.ts:L45-667)."""
+    """Service xử lý nghiệp vụ quản lý lưu trữ và thao tác file."""
 
     def __init__(self, db: Optional[AsyncIOMotorDatabase] = None):
         self.minio_client = Minio(
@@ -106,7 +99,6 @@ class FileService:
         upload_target = await self._get_file_upload_target()
 
         if upload_target == FileUploadTarget.INTERNAL:
-            # TODO: Forward to internal file service via InternalHttpService
             raise AppException(status_code=501, message="Internal upload target not implemented yet", error="Not Implemented")
 
         # Default: LOCAL

@@ -1,6 +1,6 @@
 """
-Auth Session MongoDB model — port 1-1 theo auth entity + repository trong NestJS.
-Collection 'auth_sessions' tương đương collection 'auths' trong NestJS MongoDB.
+Auth Session MongoDB model.
+Collection 'auth_sessions' quản lý các phiên làm việc của người dùng.
 """
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
@@ -10,7 +10,7 @@ from app.core.database import get_mongo_db
 
 
 class AuthSessionService:
-    """Port 1-1 từ AuthRepository + Auth entity trong NestJS."""
+    """Service thao tác lưu trữ Auth Session trong MongoDB."""
 
     def __init__(self, db: AsyncIOMotorDatabase = None):
         self.db = db or get_mongo_db()

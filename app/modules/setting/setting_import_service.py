@@ -3,7 +3,7 @@ from app.common.base_framework.base_import_service import BaseImportService
 
 
 class SettingImportService(BaseImportService):
-    """Port 1-1 từ SettingImportService trong NestJS (setting-import.service.ts:L1-45)."""
+    """Import service xử lý nhập dữ liệu cấu hình từ Excel."""
 
     async def preprocess_import(
         self, rows: List[Dict[str, Any]], context: Optional[Dict[str, Any]] = None
