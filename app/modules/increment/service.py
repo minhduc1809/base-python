@@ -16,6 +16,10 @@ class IncrementService:
             self.redis = await get_redis()
         return self.redis
 
+    async def get_increase_count(self, key_name: str) -> int:
+        """Port 1-1 từ getIncreaseCount (increment.service.ts:L14-17)."""
+        return await self.get_next_increment(key_name)
+
     async def get_next_increment(self, key_name: str) -> int:
         """Port từ getNextIncrement (increment.service.ts:L15-25): Lấy số tự tăng tiếp theo (Atomic)."""
         redis = await self._get_redis()

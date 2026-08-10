@@ -37,3 +37,14 @@ async def create_notification(
         topics=dto.topics,
         player_ids=dto.player_ids,
     )
+
+
+from app.common.base_framework.base_controller_factory import create_base_router, DPQueryScope
+
+base_router = create_base_router(
+    collection_name="notifications",
+    prefix="/notification",
+    tags=["notification"],
+    scope=DPQueryScope.GLOBAL,
+)
+router.include_router(base_router)

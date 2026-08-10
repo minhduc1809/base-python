@@ -33,7 +33,6 @@ async def delete_expired_logs(
     db: AsyncIOMotorDatabase = Depends(get_mongo_db)
 ):
     """Xóa tất cả các log đã cũ/hết hạn (khớp AuditLogInternalController.deleteExpired)."""
-    import datetime
-    cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2*365)
-    res = await db["audit_logs"].delete_many({"created_at": {"$lt": cutoff}})
-    return {"deleted": res.deleted_count}
+    service = AuditLogService(db)
+    deleted_count = await service.clear_old_logs(years=4)
+    return {"deleted": deleted_count}

@@ -25,16 +25,29 @@ class SettingService:
         return setting.value if setting else None
 
     async def set_setting_value(self, key: SettingKey, value: Any, description: Optional[str] = None) -> Setting:
-        key_str = key.value if isinstance(key, SettingKey) else key
+        """Port 1-1 từ setSettingValue (setting.service.ts:L27-51)."""
+        key_str = key.value if isinstance(key, SettingKey) else str(key)
+        # Validate key exists in SettingKey enum
+        valid_keys = {e.value for e in SettingKey}
+        if key_str not in valid_keys:
+            raise AppException(status_code=400, message="error-setting-incomplete", error="Bad Request")
+
         existing = await self.get_by_key(key_str)
         if existing:
-            existing.value = value
+            # Merge value if both existing and new are dicts
+            if isinstance(existing.value, dict) and isinstance(value, dict):
+                merged = dict(existing.value)
+                merged.update(value)
+                existing.value = merged
+            else:
+                existing.value = value
             if description:
                 existing.description = description
             item = existing
         else:
             item = Setting(key=key_str, value=value, description=description)
             self.db.add(item)
+
         await self.db.flush()
         await self.db.refresh(item)
         return item

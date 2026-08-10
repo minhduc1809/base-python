@@ -24,6 +24,16 @@ class QuyTacMaService:
                 prop = cau_hinh.get("thuocTinh")
                 if prop and prop in data:
                     parts.append(str(data[prop]))
+            elif loai == "LIEN_KET":
+                nguon_lien_ket = cau_hinh.get("nguonLienKet")
+                khoa_chinh = cau_hinh.get("khoaChinhLienKet")
+                khoa_ngoai = cau_hinh.get("khoaNgoaiLienKet")
+                thuoc_tinh = cau_hinh.get("thuocTinhLienKet")
+                if self.model and self.model.db and nguon_lien_ket and khoa_chinh and khoa_ngoai:
+                    foreign_val = data.get(khoa_ngoai)
+                    record = await self.model.db[nguon_lien_ket].find_one({khoa_chinh: foreign_val})
+                    if record and thuoc_tinh in record:
+                        parts.append(str(record[thuoc_tinh]))
             elif loai == "HAM_SINH":
                 ham_sinh = cau_hinh.get("hamSinh", "auto_seq")
                 if ham_sinh == "date_yyyymmdd":

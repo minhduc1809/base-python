@@ -67,8 +67,9 @@ class AuditLogService:
             results.append(doc)
         return results
 
-    async def clear_old_logs(self, years: int = 2) -> int:
-        """Xóa toàn bộ audit log đã cũ hơn X năm."""
+    async def clear_old_logs(self, years: int = 4) -> int:
+        """Port 1-1 từ clearOldLog (audit-log.service.ts:L38-49).
+        NestJS: moment().subtract(4, 'year') — xóa log cũ hơn 4 năm."""
         cutoff = datetime.now(timezone.utc) - timedelta(days=years * 365)
-        res = await self.collection.delete_many({"timestamp": {"$lte": cutoff}})
+        res = await self.collection.delete_many({"createdAt": {"$lte": cutoff}})
         return res.deleted_count

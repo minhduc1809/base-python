@@ -1,6 +1,9 @@
+"""
+File Router — port 1-1 từ file.controller.ts + file-public.controller.ts + file-internal.controller.ts.
+"""
 from typing import List, Optional
-from fastapi import APIRouter, Depends, File, Form, UploadFile, status
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Depends, File, Form, Header, Request, UploadFile, status
+from fastapi.responses import Response
 from pydantic import BaseModel
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.core.database import get_mongo_db
@@ -14,133 +17,125 @@ router = APIRouter(prefix="/file", tags=["file"])
 class InitMultipartDto(BaseModel):
     filename: str
     size: int
-    content_type: Optional[str] = None
+    ext: str = ""
+    mimetype: str = "application/octet-stream"
+    scope: str = "public"
 
 
 class CompleteMultipartDto(BaseModel):
-    upload_id: str
-    object_name: str
-    parts: Optional[List[dict]] = []
+    fileId: str
+    parts: List[dict] = []
 
 
+# ─── POST /file — FileController.create (file.controller.ts) ────
 @router.post("", status_code=status.HTTP_201_CREATED)
 @router.post("/upload", status_code=status.HTTP_201_CREATED)
 async def create(
     file: UploadFile = File(...),
-    resize_width: Optional[int] = Form(None, description="Chiều rộng tối đa cho ảnh (px)"),
+    scope: Optional[str] = Form("public"),
     current_user: User = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_mongo_db),
+    request: Request = None,
 ):
-    """Tải tệp tin lên hệ thống."""
+    """Port 1-1 từ FileController.create (file.controller.ts:L28-50)."""
     service = FileService(db)
     content = await file.read()
-    object_name = await service.upload_file(
-        file_bytes=content,
-        filename=file.filename,
-        content_type=file.content_type,
+    user_fullname = current_user.full_name or f"{current_user.lastname or ''} {current_user.firstname or ''}".strip() or current_user.username
+    result = await service.create(
         user_id=str(current_user.id),
-        resize_width=resize_width,
+        user_fullname=user_fullname,
+        user_username=current_user.username,
+        dto={"scope": scope},
+        file_bytes=content,
+        original_name=file.filename,
+        content_type=file.content_type,
+        file_size=len(content),
     )
-    presigned_url = await service.get_presigned_url(object_name)
-    return {
-        "filename": file.filename,
-        "object_name": object_name,
-        "size": len(content),
-        "url": presigned_url,
-    }
+    return result
 
 
+# ─── POST /file/multipart/init — FileController.initiateMultipartUpload ──
 @router.post("/multipart/init")
 async def init_upload_multipart(
     dto: InitMultipartDto,
     current_user: User = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_mongo_db),
 ):
-    """Khởi tạo S3 Multipart Upload."""
+    """Port 1-1 từ initiateMultipartUpload (file.service.ts:L533-605)."""
     service = FileService(db)
-    await service.ensure_bucket()
-    import uuid
-    upload_id = uuid.uuid4().hex
-    object_name = f"multipart/{upload_id}/{dto.filename}"
-    return {
-        "upload_id": upload_id,
-        "object_name": object_name,
-        "part_size": 16777216,
-    }
+    user_fullname = current_user.full_name or f"{current_user.lastname or ''} {current_user.firstname or ''}".strip()
+    return await service.initiate_multipart_upload(
+        user_id=str(current_user.id),
+        user_fullname=user_fullname,
+        filename=dto.filename,
+        size=dto.size,
+        ext=dto.ext,
+        mimetype=dto.mimetype,
+        scope=dto.scope,
+    )
 
 
+# ─── POST /file/multipart/complete — FileController.completeMultipartUpload ──
 @router.post("/multipart/complete")
 async def complete_upload_multipart(
     dto: CompleteMultipartDto,
     current_user: User = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_mongo_db),
 ):
-    """Hoàn tất S3 Multipart Upload."""
+    """Port 1-1 từ clientCompleteMultipartUpload (file.service.ts:L607-629)."""
     service = FileService(db)
-    url = await service.get_presigned_url(dto.object_name)
-    return {
-        "object_name": dto.object_name,
-        "url": url,
-        "status": "completed",
-    }
+    return await service.client_complete_multipart_upload(dto.fileId, dto.parts)
 
 
-@router.post("/compress/files")
-async def compress_files(
-    current_user: User = Depends(get_current_user),
-):
-    """Nén ảnh/file định kỳ."""
-    return {"message": "Files compression task queued successfully"}
-
-
+# ─── GET /file/:id/info — FilePublicController.getFileInfo ──────
 @router.get("/{id}/info")
 async def get_file_info(
     id: str,
     db: AsyncIOMotorDatabase = Depends(get_mongo_db),
+    authorization: Optional[str] = Header(None),
 ):
-    """Lấy thông tin file metadata theo ID (khớp FilePublicController.getFileInfo)."""
+    """Port 1-1 từ getFileInfo (file.service.ts:L631-637)."""
     service = FileService(db)
-    meta = await service.model.get_by_id(id)
-    if not meta:
-        from app.common.exceptions import AppException
-        raise AppException(status_code=404, message="Không tìm thấy tệp tin", error="Not Found")
-    meta["_id"] = str(meta["_id"])
-    return meta
+    return await service.get_file_info(id, authorization)
 
 
+# ─── GET /file/:id/:name — FilePublicController.getFileData ─────
 @router.get("/{id}/{name}")
 async def get_file_data(
     id: str,
     name: str,
     db: AsyncIOMotorDatabase = Depends(get_mongo_db),
+    authorization: Optional[str] = Header(None),
 ):
-    """Redirect lấy trực tiếp file data theo presigned URL (khớp FilePublicController.getFileData)."""
+    """Port 1-1 từ userGetFileData (file.service.ts:L333-342)."""
     service = FileService(db)
-    url = await service.get_presigned_url(id)
-    return RedirectResponse(url=url)
+    file_bytes, mimetype = await service.get_file_data(id)
+    return Response(content=file_bytes, media_type=mimetype)
 
 
+# ─── DELETE /file/:id — FileController.deleteById ───────────────
 @router.delete("/{file_id}", status_code=status.HTTP_200_OK)
 async def delete_file_by_id(
     file_id: str,
     current_user: User = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_mongo_db),
 ):
-    """Xóa file theo ID hoặc object_name."""
+    """Port 1-1 từ deleteById (file.service.ts:L431-441)."""
     service = FileService(db)
-    await service.delete_file(file_id)
-    return {"message": "Xóa tệp tin thành công", "file_id": file_id}
+    return await service.delete_by_id(str(current_user.id), file_id)
 
+
+# ─── Internal endpoints (file-internal.controller.ts) ───────────
 
 @router.get("/{id}/data")
 async def get_file_data_internal(
     id: str,
     db: AsyncIOMotorDatabase = Depends(get_mongo_db),
 ):
-    """Lấy dữ liệu file theo ID (khớp FileInternalController.getFileData)."""
+    """Port 1-1 từ FileInternalController.getFileData."""
     service = FileService(db)
-    url = await service.get_presigned_url(id)
-    return RedirectResponse(url=url)
+    file_bytes, mimetype = await service.get_file_data(id)
+    return Response(content=file_bytes, media_type=mimetype)
 
 
 @router.put("/{id}/data")
@@ -149,22 +144,24 @@ async def update_file_data(
     file: UploadFile = File(...),
     db: AsyncIOMotorDatabase = Depends(get_mongo_db),
 ):
-    """Cập nhật/tải đè dữ liệu tệp tin theo ID (khớp FileInternalController.updateDataById)."""
+    """Port 1-1 từ FileInternalController.updateDataById."""
     service = FileService(db)
     content = await file.read()
-    object_name = await service.upload_file(
-        file_bytes=content,
-        filename=file.filename,
-        content_type=file.content_type,
-        user_id="internal",
-    )
-    return {"object_name": object_name, "status": "updated"}
+    return await service.update_file_data(id, "internal", content, file.filename, file.content_type)
 
 
 @router.post("/migrate/db/s3")
-async def migrate_db_to_s3():
-    """Chuyển đổi dữ liệu cũ sang S3 (khớp FileInternalController.migrateDbToS3)."""
-    return {"status": "success", "message": "Migration database files to S3 triggered successfully"}
+async def migrate_db_to_s3(db: AsyncIOMotorDatabase = Depends(get_mongo_db)):
+    """Port 1-1 từ FileInternalController.migrateDbToS3."""
+    service = FileService(db)
+    return await service.migrate_db_to_s3()
+
+
+@router.post("/compress/files")
+async def compress_files(db: AsyncIOMotorDatabase = Depends(get_mongo_db)):
+    """Port 1-1 từ FileInternalController.compressFiles."""
+    service = FileService(db)
+    return await service.compress_files()
 
 
 @router.put("/{id}/upsert")
@@ -173,17 +170,9 @@ async def upsert_file_metadata(
     payload: dict,
     db: AsyncIOMotorDatabase = Depends(get_mongo_db),
 ):
-    """Upsert siêu dữ liệu file theo ID (khớp FileInternalController.upsertById)."""
-    coll = db["file_metadata"]
-    payload.pop("_id", None)
-    res = await coll.find_one_and_update(
-        {"_id": id},
-        {"$set": payload},
-        upsert=True,
-        return_document=True,
-    )
-    res["_id"] = str(res["_id"])
-    return res
+    """Port 1-1 từ FileInternalController.upsertById."""
+    service = FileService(db)
+    return await service.upsert_by_id(id, payload)
 
 
 @router.get("/presigned-url")

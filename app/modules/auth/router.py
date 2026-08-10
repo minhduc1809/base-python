@@ -1,13 +1,16 @@
+"""
+Auth Router — port 1-1 từ auth-public.controller.ts (base-backend).
+Chỉ có 3 public routes: login, logout, refresh.
+/me giữ lại vì cần thiết cho frontend.
+"""
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db_session
 from app.modules.auth.dependencies import get_current_user
 from app.modules.auth.models import User
 from app.modules.auth.schemas import (
-    ChangePasswordRequest,
     LoginRequest,
     RefreshTokenRequest,
-    RegisterRequest,
     TokenResponse,
     UserResponse,
 )
@@ -16,7 +19,7 @@ from app.modules.auth.service import AuthService
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-
+# ─── POST /auth/login (auth-public.controller.ts:L18-21) ────────
 @router.post("/login", response_model=TokenResponse)
 async def login(dto: LoginRequest, req: Request, db: AsyncSession = Depends(get_db_session)):
     service = AuthService(db)
@@ -26,19 +29,21 @@ async def login(dto: LoginRequest, req: Request, db: AsyncSession = Depends(get_
     return await service.login(dto, ip=ip, user_agent=user_agent, origin=origin)
 
 
+# ─── POST /auth/logout (auth-public.controller.ts:L24-27) ───────
 @router.post("/logout", status_code=status.HTTP_200_OK)
 async def logout(dto: RefreshTokenRequest, db: AsyncSession = Depends(get_db_session)):
     service = AuthService(db)
     await service.logout(dto.get_token())
-    return {"message": "Đăng xuất thành công"}
 
 
+# ─── POST /auth/refresh (auth-public.controller.ts:L29-33) ──────
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_tokens(dto: RefreshTokenRequest, db: AsyncSession = Depends(get_db_session)):
     service = AuthService(db)
     return await service.refresh_tokens(dto.get_token())
 
 
+# ─── GET /auth/me — giữ lại cho frontend ────────────────────────
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
     return UserResponse(
@@ -53,14 +58,3 @@ async def get_me(current_user: User = Depends(get_current_user)):
         data_partition_code=current_user.data_partition_code,
         created_at=current_user.created_at,
     )
-
-
-@router.post("/change-password", status_code=status.HTTP_200_OK)
-async def change_password(
-    dto: ChangePasswordRequest,
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
-):
-    service = AuthService(db)
-    await service.change_password(current_user.id, dto)
-    return {"message": "Đổi mật khẩu thành công"}
